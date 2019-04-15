@@ -85,14 +85,11 @@ def inference_from_checkpoint(
         folder,
         k):
     params = get_params(model)
-    params['vocab_size'] = init_embed.shape[0]
     params['embedding_dim'] = init_embed.shape[1]
     params['embeddings'] = init_embed
     params['dropout'] = 0
-    params['kln'] = None  # kln: k-label-neighbor
     params['num_layers'] = nl
-
-    params['num_epochs'] = None
+    params['num_epochs'] = 1
     params['batch_size'] = 1
     params['term_size'] = 9956
     params['folder'] = model

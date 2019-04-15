@@ -220,8 +220,11 @@ class EncodeEstimator:
         predictions = self.estimator.predict(
             lambda: self.predict_input_fn(docs), yield_single_examples=False)
         for i, pred_dict in enumerate(predictions):
-            print("The {}th batch:".format(i))
-            doc_vecs[i * self.batch_size:(i + 1) * self.batch_size] = pred_dict['doc_vecs']
+            if i % 100 == 0:
+                print("The {}th batch:".format(i))
+            start = i * self.batch_size
+            end = start + self.batch_size
+            doc_vecs[start: end] = pred_dict['doc_vecs']
             pred_labels.extend(pred_dict['pred_labels'])
         return doc_vecs, pred_labels
 

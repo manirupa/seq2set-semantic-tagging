@@ -1,9 +1,14 @@
-import numpy as np
-import re
-from utils import save, save_list, load
+import argparse
 import json
-import h5py
 import os
+import re
+
+import h5py
+import numpy as np
+
+from model_params import get_params
+from models.EncodeEstimator import EncodeEstimator
+from utils import save_list, load, read_file
 
 
 def read_vocabs(vocabs_path):
@@ -18,24 +23,19 @@ def read_vocabs(vocabs_path):
 def create_delicious_glove():
     embeddings_index = {}
     skipped_lines = []
-
     vocabs = read_vocabs('DeliciousMIL/vocabs.txt')
-
     with open('DeliciousMIL/glove.42B.300d.txt', encoding='utf-8') as f_42B:
         for i, line in enumerate(f_42B):
             values = line.split()
             word = values[0]
-
             if word not in vocabs:
                 continue
-
             try:
                 embedding = np.array([float(val) for val in values[1:]])
             except ValueError:
                 print(i, word, values)
                 skipped_lines.append(i)
                 continue
-
             embeddings_index[word] = embedding
 
     with open('DeliciousMIL/glove.8520.300d.txt', mode='w', encoding='utf-8') as f_8520:
@@ -43,7 +43,6 @@ def create_delicious_glove():
             if word not in embeddings_index:
                 f_8520.write(word + '\n')  # todo
                 continue
-
             f_8520.write(word + '\t')
             for x in embeddings_index[word]:
                 f_8520.write(str(x) + ' ')
@@ -52,62 +51,12 @@ def create_delicious_glove():
 
 def reconstruct_txt_file_from_indices():
     vocabs = read_vocabs('DeliciousMIL/vocabs.txt')
-
     with open('DeliciousMIL/train-data.dat', encoding='utf-8') as f_dat:
         with open('DeliciousMIL/train-data.txt', mode='w', encoding='utf-8') as f_txt:
             for line in f_dat:
                 indices = re.sub('[<>]', '', line).split()
                 words = [vocabs[int(i)] for i in indices]
                 f_txt.write(' '.join(words) + '\n')
-
-
-def encode_nn(
-        docs_path,
-        labels,
-        model,
-        test_mode,
-        loss_fn,
-        term_size,
-        kln):
-
-    model_params, estimator_params = get_params(model)
-    model_params['mlp_layer_dims'] += [term_size]
-    model_params['dropout'] = FLAGS.dropout
-    model_params['kln'] = kln  # kln: k-label-neighbor
-
-    if 'num_layers' not in model_params:
-        model_params['num_layers'] = 'none'
-
-    estimator_params['data_size'] = len(labels)
-    estimator_params['embedding_dim'] = FLAGS.embedding_dim
-    estimator_params['num_epochs'] = FLAGS.num_epochs
-    estimator_params['batch_size'] = FLAGS.batch_size
-    estimator_params['term_size'] = term_size
-    model_params['word_vecs_path'] = FLAGS.embedded_sentences.split('/')[1].split('.')[0]
-    estimator_params['folder'] = None
-
-    # get estimator
-    estimator = EncodeEstimatorFactory.get_estimator(
-        loss_fn, model, estimator_params, model_params)
-
-    with h5py.File(docs_path, 'r') as f:
-        def sen_gen():
-            for i in docs_gen(f):
-                yield i[0]
-
-        def len_gen():
-            for i in docs_gen(f):
-                yield i[1]
-
-        if test_mode == 2:
-            estimator.train(sen_gen, len_gen, labels, 1)
-        else:
-            estimator.train(sen_gen, len_gen, labels)
-
-        doc_vecs, pred_labels = estimator.predict(sen_gen, len_gen)
-
-    all_params = {**model_params, **estimator_params}
-    return doc_vecs, pred_labels, estimator.out_dir, all_params
 
 
 def docs_gen(f):
@@ -119,32 +68,49 @@ def docs_gen(f):
     f_keys = sorted(list(f.keys()), key=int)
 
     for k in f_keys:
-
         if k == '100':
             break
-
         embedded_sentence = np.array(f.get(k))
         yield embedded_sentence, embedded_sentence.shape[0]
 
 
-def main(_):
+def main():
     # ---------
     # load data
-    labels = load(FLAGS.labels_path)
-    terms = load(FLAGS.terms_path)
-    pub_med_ids, _ = read_file(FLAGS.documents_path)
-    index2word = load(FLAGS.index2word_path)
+    labels = load(args.labels_path)
+    terms = load(args.terms_path)
+    pub_med_ids, _ = read_file(args.documents_path)
+    index2word = load(args.index2word_path)
 
-    # --------------------
+    # ------
     # Encode
-    doc_vecs, pred_labels, out_dir, hparams = encode_nn(
-        FLAGS.embedded_sentences,
-        labels,
-        FLAGS.model,
-        FLAGS.test_mode,
-        FLAGS.loss_fn,
-        len(terms),
-        FLAGS.labels_path.split('/')[1])
+    params = get_params(args.model)
+    params['dropout'] = args.dropout
+    params['data_size'] = len(labels)
+    params['embedding_dim'] = args.embedding_dim
+    params['num_epochs'] = args.num_epochs
+    params['batch_size'] = args.batch_size
+    params['term_size'] = term_size
+    params['word_vecs_path'] = args.embedded_sentences.split('/')[1].split('.')[0]
+
+    # get estimator
+    estimator = EncodeEstimator(params)
+
+    with h5py.File(docs_path, 'r') as f:
+        def sen_gen():
+            for i in docs_gen(f):
+                yield i[0]
+
+        def len_gen():
+            for i in docs_gen(f):
+                yield i[1]
+
+        if args.test_mode == 2:
+            estimator.train(sen_gen, len_gen, labels, 1)
+        else:
+            estimator.train(sen_gen, len_gen, labels)
+
+        doc_vecs, pred_labels = estimator.predict(sen_gen, len_gen)
 
     # ---------
     # save data
@@ -167,5 +133,42 @@ def main(_):
 
 
 if __name__ == '__main__':
-    reconstruct_txt_file_from_indices()
-    print(0)
+    # reconstruct_txt_file_from_indices()
+    # exit()
+
+    parser = argparse.ArgumentParser(
+        description='Delicious',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '-k', nargs='?', type=int,
+        default=5, help='top k closest docs of a query doc')
+    parser.add_argument(
+        '--labels_path', nargs='?', type=str,
+        default='data/labels.pickle', help=' ')
+    parser.add_argument(
+        '--doc_tfidf_reps_path', nargs='?', type=str,
+        default='data/doc_tfidf_reps_mc1.pickle', help=' ')
+    parser.add_argument(
+        '--index2word_path', nargs='?', type=str,
+        default='data/index2word_mc1.pickle', help=' ')
+    parser.add_argument(
+        '--terms_path', nargs='?', type=str,
+        default='data/terms.pickle', help=' ')
+    parser.add_argument(  # data/cleaned_phrase_embedded.txt
+        '--documents_path', nargs='?', type=str,
+        default='data/cleaned.txt', help=' ')  
+    parser.add_argument(
+        '--fuse_doc_type', nargs='?', type=str,
+        default='arithmetic_mean', help=' ')
+    parser.add_argument(
+        '--test_mode', nargs='?', type=int, default=0,
+        help="if 0, normal."
+             "if 1, inference will only calculate the cosine"
+             "similarities of the first 100 docs."
+             "if 2, inference will only calculate the cosine"
+             "similarities of the first 100 docs and Encoder"
+             "will only train for 1 step.")
+
+    args = parser.parse_args()
+    
+    main()

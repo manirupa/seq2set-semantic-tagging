@@ -285,20 +285,6 @@ def keywords_test():
     pp.pprint(len(tags_unique))
 
 
-def one_hot_test():
-    # TODO
-    x = tf.constant([[0., 1., 0.], [1., 0., 0.], [0., 0., 1.], [1., 0., 0.]])
-    x = tf.map_fn(lambda inp: tf.reshape(tf.where(tf.equal(inp, 1.)), [-1]),
-                  x,
-                  dtype=tf.int64)
-
-    # x = tf.constant([0., 1., 1.])
-    # x = tf.pad(tf.reshape(tf.where(tf.equal(x, 1.)), [-1]), paddings=[])
-
-    with tf.Session() as sess:
-        print(sess.run(x))
-
-
 def tf_records():
     def make_example(pub_med_id, sequence, labels):
         # The object we return
@@ -381,13 +367,6 @@ def tf_records():
         print(x)
 
 
-def inference_test():
-    from models.inference import main
-    doc_vecs = np.load('results/outputs/doc2vec/doc_vecs.npy')
-    labels = load('data/labels')
-    main(doc_vecs[:100], labels[:100], 3, 'arithmetic_mean')
-
-
 def save_load_variable_test():
     tf.reset_default_graph()
 
@@ -423,16 +402,6 @@ def get_tfidf_test():
 
     labels, terms_tuples, wv2terms, doc_tfidf_reps, _ = get_tfidf(
         documents, vocab, n)
-
-    # labels_txt = ['{}\t{}'.format(pub_med_id,
-    #                               ', '.join([index2word[terms[l]]
-    #                                          for l in lab]))
-    #               for pub_med_id, lab in zip(pub_med_ids, labels)]
-    #
-    # doc_tfidf_reps_txt = ['{}\t{}'.format(pub_med_id,
-    #                                       ', '.join([index2word[l]
-    #                                                  for l in lab]))
-    #                       for pub_med_id, lab in zip(pub_med_ids, doc_tfidf_reps)]
     print(0)
 
 

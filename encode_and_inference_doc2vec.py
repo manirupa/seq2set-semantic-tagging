@@ -108,7 +108,5 @@ if __name__ == '__main__':
              "if 2, inference will only calculate the cosine"
              "similarities of the first 100 docs and Encoder"
              "will only train for 1 step.")
-    
     args = parser.parse_args()
-
     main()

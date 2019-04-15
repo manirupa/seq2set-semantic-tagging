@@ -18,12 +18,9 @@ tf.logging.set_verbosity(tf.logging.INFO)
 flags = tf.flags
 flags.DEFINE_float("dropout", 0.2, "dropout rate")
 flags.DEFINE_float("alpha", 1, "weight of LM loss")
-flags.DEFINE_integer(
-    "k", 5, "top k closest docs of a query doc")
-flags.DEFINE_integer(
-    "num_epochs", 60, " ")
-flags.DEFINE_integer(
-    "batch_size", 64, " ")
+flags.DEFINE_integer("k", 5, "top k closest docs of a query doc")
+flags.DEFINE_integer("num_epochs", 60, " ")
+flags.DEFINE_integer("batch_size", 64, " ")
 flags.DEFINE_integer(
     "test_mode", 0,
     "if 0, normal."
@@ -34,30 +31,24 @@ flags.DEFINE_integer(
     "will only train for 1 step.")
 flags.DEFINE_string(
     "model", "BiLSTM",
-    "options: DAN, LSTM, BiLSTM, BiLSTMATT,"
-    "Transformer, doc2vec")
+    "options: DAN, LSTM, BiLSTM, BiLSTMATT, Transformer, doc2vec")
 flags.DEFINE_string(
     "loss_fn", "sigmoid",
     "options: softmax_uniform, softmax_skewed_labels, lm,"
     "sigmoid, sigmoid_with_constraint")
+flags.DEFINE_string("word_vecs_path", "data/word2vec_sg1_s50_w4_m1_n5_i15.npy", " ")
+flags.DEFINE_string("docs_path", "data/docs_word_indices_mc1.pickle", " ")
+flags.DEFINE_string("labels_path", "data/labels.pickle", " ")
+flags.DEFINE_string("doc_tfidf_reps_path", "data/doc_tfidf_reps_mc1.pickle", " ")
+flags.DEFINE_string("index2word_path", "data/index2word_mc1.pickle", " ")
+flags.DEFINE_string("terms_path", "data/terms.pickle", " ")
+flags.DEFINE_string("documents_path", "data/cleaned.txt", " ")  # data/cleaned_phrase_embedded.txt
+flags.DEFINE_string("fuse_doc_type", "arithmetic_mean", "options: arithmetic_mean, geometric_mean")
 flags.DEFINE_string(
-    "word_vecs_path", "data/word2vec_sg1_s50_w4_m1_n5_i15.npy", " ")
-flags.DEFINE_string(
-    "docs_path", "data/docs_word_indices_mc1.pickle", " ")
-flags.DEFINE_string(
-    "labels_path", "data/labels.pickle", " ")
-flags.DEFINE_string(
-    "doc_tfidf_reps_path", "data/doc_tfidf_reps_mc1.pickle", " ")
-flags.DEFINE_string(
-    "index2word_path", "data/index2word_mc1.pickle", " ")
-flags.DEFINE_string(
-    "terms_path", "data/terms.pickle", " ")
-flags.DEFINE_string(
-    "documents_path", "data/cleaned.txt", " ")  # data/cleaned_phrase_embedded.txt
-flags.DEFINE_string(
-    "fuse_doc_type", "arithmetic_mean",
-    "options: arithmetic_mean, geometric_mean")
+    'folder', '1551239956_BiLSTM__SigmoidEncode_word2vec_sg1_s50_w4_m1_n5_i15.npy_nl4_klnlabels.pickle_dp0.2_ep1_bs32',
+    'model folder')
 tf.flags.DEFINE_boolean('keep_model_files', True, " ")
+tf.flags.DEFINE_boolean('direct', False, " ")
 FLAGS = flags.FLAGS
 
 
@@ -99,30 +90,48 @@ def main(_):
     params['model'] = FLAGS.model
     params['alpha'] = FLAGS.alpha
 
-    folder = '%d_%s_%s_%s_nl%s_kln%s_dp%s_ep%d_bs%d' % (
-        int(time.time()), params['model'], params['loss_fn'],
-        os.path.split(FLAGS.word_vecs_path)[-1],
-        params['num_layers'], os.path.split(FLAGS.labels_path)[1],
-        params['dropout'], params['num_epochs'], params['batch_size'])
-
-    params['model_dir'] = os.path.join("results", "models", folder)
-    out_dir = os.path.join("results", "outputs", folder)
+    if FLAGS.direct:
+        folder = FLAGS.folder
+        params['model_dir'] = os.path.join("results", "models", folder)
+        out_dir = os.path.join("results", "outputs", folder, "direct")
+    else:
+        folder = '%d_%s_%s_%s_nl%s_kln%s_dp%s_ep%d_bs%d' % (
+            int(time.time()), params['model'], params['loss_fn'],
+            os.path.split(FLAGS.word_vecs_path)[-1],
+            params['num_layers'], os.path.split(FLAGS.labels_path)[1],
+            params['dropout'], params['num_epochs'], params['batch_size'])
+        params['model_dir'] = os.path.join("results", "models", folder)
+        out_dir = os.path.join("results", "outputs", folder)
     os.makedirs(out_dir, exist_ok=True)
 
     # ------
     # Encode
     estimator = EncodeEstimator(params)
 
-    if FLAGS.test_mode == 2:
-        estimator.train_and_eval(
-            docs_train, labels_lm_train, labels_train,
-            docs_eval, labels_lm_eval, labels_eval, max_step=1)
-    else:
-        estimator.train_and_eval(
-            docs_train, labels_lm_train, labels_train,
-            docs_eval, labels_lm_eval, labels_eval)
+    if not FLAGS.direct:
+        if FLAGS.test_mode == 2:
+            estimator.train_and_eval(
+                docs_train, labels_lm_train, labels_train,
+                docs_eval, labels_lm_eval, labels_eval, max_step=1)
+        else:
+            estimator.train_and_eval(
+                docs_train, labels_lm_train, labels_train,
+                docs_eval, labels_lm_eval, labels_eval)
 
+    estimator.batch_size = 128  # takes less time with large batch size
     doc_vecs, pred_labels = estimator.predict(docs)
+
+    pub_med_ids, _ = read_file(FLAGS.documents_path)
+    index2word = load(FLAGS.index2word_path)
+
+    # save predicted labels to disk
+    pred_lab_words = []
+    for p_id, lab in zip(pub_med_ids, pred_labels):
+        pred_lab = ', '.join([index2word[terms[l]] for l in lab])
+        line = str(p_id) + '\t' + pred_lab
+        pred_lab_words.append(line)
+
+    save_list(os.path.join(out_dir, 'pred_labels.txt'), pred_lab_words)
 
     if not FLAGS.keep_model_files:
         shutil.rmtree(params['model_dir'], ignore_errors=True)
@@ -135,6 +144,9 @@ def main(_):
         f.write(json.dumps(params))
     del params
 
+    print("Finished predicting.")
+    exit(1)
+
     # ---------
     # Inference
     doc_tfidf_reps = labels
@@ -145,23 +157,12 @@ def main(_):
         doc_vecs, doc_tfidf_reps, FLAGS.k, FLAGS.fuse_doc_type)
 
     save(os.path.join(out_dir, 'top_k_indices'), top_k_indices)
-    np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
-    np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
+    # np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
+    # np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
     del doc_vecs, top_k_indices, fused_docs
 
-    # ---------
-    # Save data
-    pub_med_ids, _ = read_file(FLAGS.documents_path)
-    index2word = load(FLAGS.index2word_path)
-
-    pred_lab_words = []
-    for p_id, lab in zip(pub_med_ids, pred_labels):
-        pred_lab = ', '.join([index2word[terms[l]] for l in lab])
-        line = str(p_id) + '\t' + pred_lab
-        pred_lab_words.append(line)
-
-    save_list(os.path.join(out_dir, 'pred_labels.txt'), pred_lab_words)
-
+    # ----------------------------
+    # Save expanded labels to disk
     # convert to word ids
     labels = [[terms[l] for l in lab] for lab in labels]
 
