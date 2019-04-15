@@ -139,26 +139,4 @@ python encode_and_inference.py \
 
 ### Direct inference
 
-```bash
-python direct.py --wv_dir=results/models/word2vec_sg1_s300_w5_m2_n5_i15/wv \
-	--input_dir=data/30_sum_full_text.txt \
-	--doc_tfidf_reps_path=data/doc_tfidf_reps_mc2 \
-	--loss_fn=sigmoid \
-	--terms_path=data/terms_mc2 \
-	--labels_path=data/labels_mc2 \
-	--model=BiLSTMATT \
-	--fuse_doc_type=arithmetic_mean \
-	--folder="1548709043_BiLSTMATT_SigmoidEncode_ep1_bs128_dp0.5_labels_mc2"
-```
-
-or
-
-``` bash
-python direct.py --wv_dir=results/models/word2vec_sg1_s300_w5_m2_n5_i15/wv \
-	--input_dir=data/30_sum_full_text.txt \
-	--doc_tfidf_reps_path=data/doc_tfidf_reps_mc2 \
-	--terms_path=data/terms_mc2 \
-	--labels_path=data/labels_mc2 \
-	--fuse_doc_type=arithmetic_mean \
-	--d2v=1545725498_doc2vec
-```
+TODO
