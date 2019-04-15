@@ -5,6 +5,7 @@ __pycache__/
 
 # folders
 /data
+/data1
 /raw_data
 /results
 /misc
