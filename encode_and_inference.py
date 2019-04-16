@@ -49,6 +49,7 @@ flags.DEFINE_string(
     'model folder')
 tf.flags.DEFINE_boolean('keep_model_files', True, " ")
 tf.flags.DEFINE_boolean('direct', False, " ")
+tf.flags.DEFINE_boolean('no_inference', False, " ")
 FLAGS = flags.FLAGS
 
 
@@ -145,7 +146,8 @@ def main(_):
     del params
 
     print("Finished predicting.")
-    exit(1)
+    if FLAGS.no_inference:
+        exit(1)
 
     # ---------
     # Inference
