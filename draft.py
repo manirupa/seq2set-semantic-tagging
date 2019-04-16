@@ -8,7 +8,6 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 
-from model_params import get_params
 from utils import load, save_list
 
 
@@ -97,7 +96,7 @@ def labels_test():
 
 def dataset_test():
     from models.EncodeEstimator import EncodeEstimator
-    from encode_and_inference import remove_samples_with_empty_labels
+    from utils import get_args
 
     model = "GRU"
     loss_fn = "sigmoid"
@@ -119,7 +118,7 @@ def dataset_test():
     labels_lm = [[terms[l] for l in lab] for lab in labels]
 
     # load params
-    params = get_params(model)
+    params = vars(get_args())
     params['vocab_size'] = init_embed.shape[0]
     params['embedding_dim'] = init_embed.shape[1]
     params['mlp_layer_dims'] += [term_size]
@@ -181,6 +180,7 @@ def dataset_test():
 def dataset_test3():
     from models.EncodeEstimatorElmo import EncodeEstimator
     import h5py
+    from utils import get_args
 
     model = "Transformer"
     loss_fn = "sigmoid"
@@ -213,7 +213,7 @@ def dataset_test3():
             yield embedded_sentence, len(embedded_sentence)
 
     # load params
-    params = get_params(model)
+    params = vars(get_args())
     params['word_vecs_path'] = word_vecs_path
     params['mlp_layer_dims'] += [term_size]
     params['dropout'] = dropout

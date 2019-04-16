@@ -6,10 +6,9 @@ import h5py
 import numpy as np
 import tensorflow as tf
 
-from model_params import get_params
 from models import inference
 from models.EncodeEstimatorElmo import EncodeEstimator
-from utils import load, save, save_list, read_file
+from utils import load, save, save_list, read_file, get_args
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -78,12 +77,12 @@ def docs_gen(f):
 def main(_):
     # ---------
     # Load data
+    params = vars(get_args())
     # todo remove samples with empty labels for softmax
     labels = load(FLAGS.labels_path)
     terms = load(FLAGS.terms_path)
 
     # get params
-    params = get_params(FLAGS.model)
     params['pred_data_size'] = len(labels)
     params['embeddings_dim'] = FLAGS.embedding_dim
     params['dropout'] = FLAGS.dropout
