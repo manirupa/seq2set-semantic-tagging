@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # folders
-/data
+/src/data
 /data1
 /raw_data
 /results

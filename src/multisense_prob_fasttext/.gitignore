@@ -1,0 +1,6 @@
+modelfiles/
+log/
+data/
+
+*.o
+multift
