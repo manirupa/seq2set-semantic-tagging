@@ -8,11 +8,12 @@ __pycache__/
 
 # folders
 /src/data
+src/DeliciousMIL
 /data1
 /raw_data
 /results
 /misc
-/DeliciousMIL
+
 
 /.idea
 /.vscode
