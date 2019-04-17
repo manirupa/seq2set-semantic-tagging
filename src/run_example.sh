@@ -44,7 +44,7 @@ python encode_and_inference.py \
   --epsilon 1e-9 \
   --doc_vec_length 50 \
   --term_size 9956 \
-  --mlp_layer_dims 50 1000 2500 5000 9956
+  --mlp_layer_dims 50 1000 2500 5000 9956 \
   --hidden_size 200 \
   --num_layers 2 \
   --attention_size 200 \
