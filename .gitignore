@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# osc output files
+/src/*.o[0-9]*
+
 # folders
 /src/data
 /data1
