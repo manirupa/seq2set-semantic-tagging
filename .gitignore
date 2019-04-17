@@ -6,6 +6,9 @@ __pycache__/
 # osc output files
 /src/*.o[0-9]*
 
+*.sh
+!run_example.sh
+
 # folders
 /src/data
 src/DeliciousMIL

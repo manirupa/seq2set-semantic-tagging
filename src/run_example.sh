@@ -1,8 +1,7 @@
-#PBS -N ondemand/sys/myjobs/basic_python_serial
+#PBS -N EXP_NAME
 #PBS -j oe
 #PBS -l walltime=02:00:00
 #PBS -l nodes=1:ppn=28:gpus=1:default
-#PBS -A PAS1339
 qstat -f $PBS_JOBID
 
 
@@ -12,7 +11,7 @@ cd $PBS_O_WORKDIR
 
 
 # download data.zip
-# wget -O data.zip https://www.dropbox.com/s/3wv4x2ndql0n07s/data.zip?dl=1
+# wget -O data.zip https://osu.box.com/s/eld6atk3y7m9923ael3ewkzmy22c3v08
 # unzip data.zip
 # rm data.zip
 
@@ -31,14 +30,24 @@ cd $PBS_O_WORKDIR
 
 # run
 python encode_and_inference.py \
-  --dropout=0.3 \
-  --num_epochs=100 \
-  --batch_size=128 \
-  --model=LSTM \
-  --loss_fn=sigmoid \
-  --word_vecs_path=data/word2vec_sg1_s300_w5_m2_n5_i15.npy \
-  --docs_path=data/docs_word_indices_mc2 \
-  --labels_path=data/labels_mc2 \
-  --doc_tfidf_reps_path=data/doc_tfidf_reps_mc2 \
-  --index2word_path=data/index2word_mc2 \
-  --terms_path=data/terms_mc2
+  --model Transformer \
+  --loss_fn lm \
+  --keep_model_files True \
+  --labels_path data/labels.pickle \
+  --num_epochs 60 \
+  --batch_size 32 \
+  --dropout 0.2 \
+  --alpha 1.0 \
+  --lr 0.0001 \
+  --beta1 0.9 \
+  --beta2 0.999 \
+  --epsilon 1e-9 \
+  --doc_vec_length 50 \
+  --term_size 9956 \
+  --mlp_layer_dims 50 1000 2500 5000 9956
+  --hidden_size 200 \
+  --num_layers 2 \
+  --attention_size 200 \
+  --num_heads 5 \
+  --max_length 256 \
+  --padding_length 256
