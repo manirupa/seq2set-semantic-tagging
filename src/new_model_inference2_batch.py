@@ -1,4 +1,3 @@
-import argparse
 import os
 import re
 import time
@@ -7,10 +6,9 @@ import numpy as np
 from annoy import AnnoyIndex
 from nltk.corpus import stopwords
 
-from model_params import get_params
 from models.EncodeEstimator import EncodeEstimator
 from models.inference import expand_label_v3
-from utils import load, save_list, read_file, save
+from utils import load, save_list, read_file, save, get_args
 
 stop_words = stopwords.words("english")
 
@@ -80,19 +78,12 @@ def inference_from_checkpoint(
         index2word,
         terms,
         model,
-        nl,
         root_output_folder,
         folder,
         k):
-    params = get_params(model)
+    params = vars(args)
     params['embedding_dim'] = init_embed.shape[1]
     params['embeddings'] = init_embed
-    params['dropout'] = 0
-    params['num_layers'] = nl
-    params['num_epochs'] = 1
-    params['batch_size'] = 1
-    params['term_size'] = 9956
-    params['folder'] = model
 
     # get estimator
     estimator = EncodeEstimator(params)
@@ -139,7 +130,6 @@ def parse_folder_name(folder_name):
 
 
 def main():
-    print(args)
     doc_tfidf_reps = load(args.doc_tfidf_reps_path)
     labels = load(args.labels_path)
     index2word = load(args.index2word_path)
@@ -165,7 +155,6 @@ def main():
                                 index2word,
                                 terms,
                                 params['model_name'],
-                                params['nl'],
                                 args.root_output_folder,
                                 model_folder,
                                 args.k)
@@ -184,75 +173,11 @@ def main():
             index2word,
             terms,
             params['model_name'],
-            params['nl'],
             args.root_output_folder,
             args.folder,
             args.k)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Direct.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        '--txt_docs_path', nargs='?', type=str,
-        default='data/cleaned.txt',
-        help='30 sum full text file')
-    parser.add_argument(
-        '--docs_word_indices_path', nargs='?', type=str,
-        default='data/docs_word_indices_mc1.pickle',
-        help='doc word indices pickle')
-    parser.add_argument(
-        '--d2v', nargs='?', type=str,
-        default='1545725498_doc2vec',
-        help='doc2vec folder')
-    parser.add_argument(
-        '--doc_tfidf_reps_path', nargs='?', type=str,
-        default='data/doc_tfidf_reps_mc1.pickle',
-        help='doc_tfidf_reps_path')
-    parser.add_argument(
-        '-k', nargs='?', type=int,
-        default=5, help='top k closest docs of a query doc')
-    parser.add_argument(
-        '--loss_fn', nargs='?', type=str,
-        default='sigmoid',
-        help='loss function')
-    parser.add_argument(
-        '--index2word_path', nargs='?', type=str,
-        default='data/index2word_mc1.pickle',
-        help=' ')
-    parser.add_argument(
-        '--terms_path', nargs='?', type=str,
-        default='data/terms.pickle',
-        help=' ')
-    parser.add_argument(
-        '--labels_path', nargs='?', type=str,
-        default='data/labels.pickle',
-        help=' ')
-    parser.add_argument(
-        '--fuse_doc_type', nargs='?', type=str,
-        default='arithmetic_mean',
-        help='fuse doc type')
-    parser.add_argument(
-        '--root_output_folder', nargs='?', type=str,
-        default='/fs/project/PAS0536/seq2set_proj_archive/seq2set_v2_until20190217_outputs',
-        help='root folder for putting output inference folders')
-    parser.add_argument(
-        '--root_folder', nargs='?', type=str,
-        default='/fs/project/PAS0536/seq2set_proj_archive/seq2set_v2_until20190217_models',
-        help='root folder containing model folders')
-    parser.add_argument(
-        '--folder', nargs='?', type=str,
-        default='1551239956_BiLSTM__SigmoidEncode_word2vec_sg1_s50_w4_m1_n5_i15.'
-                'npy_nl4_klnlabels.pickle_dp0.2_ep1_bs32',
-        help='model folder')
-    parser.add_argument(
-        '--folder_names_file_path', nargs='?', type=str,
-        default='',
-        # default='/fs/project/PAS0536/seq2set_proj_archive/seq2set_v2_until20190217_models/model_names.txt',
-        help='if set, then model names file path is used')
-    args = parser.parse_args()   
-    
-    print('folder_names_file_path', args.folder_names_file_path)
-
+    args = get_args()
     main()

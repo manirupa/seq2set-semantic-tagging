@@ -7,17 +7,17 @@ from gensim.models import KeyedVectors
 from preprocess.get_tfidf import get_tfidf
 from preprocess.get_word_vectors import get_wv
 from utils import save_list, save, read_file
-from model_params import settings
 
 stop_words = stopwords.words("english")
 
 
-def main(input_dir, model_name, n):
-    pub_med_ids, documents = read_file(input_dir)
+def main():
+    pub_med_ids, documents = read_file(args.i)
+    settings = vars(args)
 
     # ---
     # w2v
-    wv_dir = get_wv(documents, settings, model_name)
+    wv_dir = get_wv(documents, settings, args.m)
 
     min_count = str(settings['min_count'])
 
@@ -35,7 +35,7 @@ def main(input_dir, model_name, n):
         print("This tfidf model has already been trained.")
         return
     labels, terms_tuples, wv2terms, doc_tfidf_reps, tfidf_model = get_tfidf(
-        documents, vocab, n)
+        documents, vocab, args.n)
 
     tfidf_model.save(tfidf_model_dir)
 
@@ -75,20 +75,32 @@ def main(input_dir, model_name, n):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Pre-processing...',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-i', nargs='?', type=str,
-        default='data/cleaned.txt',
+        '-i', default='data/cleaned.txt',
         help='input source data file, '
              'options: data/cleaned.txt or cleaned_phrase_embedded.txt')
     parser.add_argument(
-        '-m', nargs='?', type=str,
-        default='fast_text',
+        '-m', default='fast_text',
         help='model to train word vectors, options: fast_text or word2vec')
+    parser.add_argument('-n', type=int, default=10000, help='top n tfidf')
     parser.add_argument(
-        '-n', nargs='?', type=int,
-        default=10000, help='top n tfidf')
+        '--sg', type=int, default=1,
+        help='Training algorithm: 1 for skip-gram; otherwise CBOW.')
+    parser.add_argument('--size', type=int, default=50, help='Dimensionality of the word vectors.')
+    parser.add_argument(
+        '--window', type=int, default=4,
+        help='Maximum distance between the current and predicted word within a sentence.')
+    parser.add_argument(
+        '--min_count', type=int, default=1,
+        help='Ignores all words with total frequency lower than this.')
+    parser.add_argument(
+        '--negative', type=int, default=5,
+        help='If > 0, negative sampling will be used, the int'
+             'for negative specifies how many "noise words"'
+             'should be drawn (usually between 5-20).'
+             'If set to 0, no negative sampling is used.')
+    parser.add_argument('--iter', type=int, default=15, help='Number of epochs over the corpus.')
     args = parser.parse_args()
 
-    main(args.i, args.m, args.n)
+    main()

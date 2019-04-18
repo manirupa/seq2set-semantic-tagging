@@ -6,10 +6,11 @@ import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 from models import inference
-from utils import load, save, save_list, read_file
+from utils import load, save, save_list, read_file, get_args
 
 
 def main():
+    args = get_args()
     # ---------
     # load data
     labels = load(args.labels_path)
@@ -44,8 +45,9 @@ def main():
         doc_vecs, doc_tfidf_reps, args.k, args.fuse_doc_type)
 
     save(os.path.join(out_dir, 'top_k_indices'), top_k_indices)
-    np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
-    np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
+    if args.keep_model_files:
+        np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
+        np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
     del doc_vecs, top_k_indices, fused_docs
 
     # ---------
@@ -69,44 +71,4 @@ def main():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Direct.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        '-k', nargs='?', type=int,
-        default=5, help='top k closest docs of a query doc')
-    parser.add_argument(
-        '--labels_path', nargs='?', type=str,
-        default='data/labels.pickle',
-        help=' ')
-    parser.add_argument(
-        '--doc_tfidf_reps_path', nargs='?', type=str,
-        default='data/doc_tfidf_reps_mc1.pickle',
-        help='doc_tfidf_reps_path')
-    parser.add_argument(
-        '--index2word_path', nargs='?', type=str,
-        default='data/index2word_mc1.pickle',
-        help=' ')
-    parser.add_argument(
-        '--terms_path', nargs='?', type=str,
-        default='data/terms.pickle',
-        help=' ')
-    parser.add_argument(
-        '--documents_path', nargs='?', type=str,
-        default='data/cleaned.txt',
-        help=' ')  # data/cleaned_phrase_embedded.txt
-    parser.add_argument(
-        '--fuse_doc_type', nargs='?', type=str,
-        default='arithmetic_mean',
-        help='fuse doc type')
-    parser.add_argument(
-        '--test_mode', nargs='?', type=int,
-        default=0,
-        help="if 0, normal."
-             "if 1, inference will only calculate the cosine"
-             "similarities of the first 100 docs."
-             "if 2, inference will only calculate the cosine"
-             "similarities of the first 100 docs and Encoder"
-             "will only train for 1 step.")
-    args = parser.parse_args()
     main()

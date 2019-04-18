@@ -13,49 +13,6 @@ from utils import load, save, save_list, read_file, get_args
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 tf.logging.set_verbosity(tf.logging.INFO)
 
-flags = tf.flags
-flags.DEFINE_float("dropout", 0.2, "dropout rate")
-flags.DEFINE_integer(
-    "k", 5, "top k closest docs of a query doc")
-flags.DEFINE_integer(
-    "num_epochs", 60, " ")
-flags.DEFINE_integer(
-    "batch_size", 64, " ")
-flags.DEFINE_integer(
-    "embedding_dim", 50, " ")
-flags.DEFINE_integer(
-    "test_mode", 0,
-    "if 0, normal."
-    "if 1, inference will only calculate the cosine"
-    "similarities of the first 100 docs."
-    "if 2, inference will only calculate the cosine"
-    "similarities of the first 100 docs and Encoder"
-    "will only train for 1 step.")
-flags.DEFINE_string(
-    "model", "BiLSTM",
-    "options: DAN, LSTM, BiLSTM, BiLSTMATT,"
-    "Transformer, doc2vec")
-flags.DEFINE_string(
-    "loss_fn", "sigmoid",
-    "options: softmax_uniform, softmax_skewed_labels, lm,"
-    "sigmoid, sigmoid_with_constraint")
-flags.DEFINE_string(
-    "embedded_sentences", "data/elmo_50_sentences.hdf5", " ")
-flags.DEFINE_string(
-    "labels_path", "data/labels.pickle", " ")
-flags.DEFINE_string(
-    "doc_tfidf_reps_path", "data/doc_tfidf_reps_mc1.pickle", " ")
-flags.DEFINE_string(
-    "index2word_path", "data/index2word_mc1.pickle", " ")
-flags.DEFINE_string(
-    "terms_path", "data/terms.pickle", " ")
-flags.DEFINE_string(
-    "documents_path", "data/cleaned.txt", " ")  # data/cleaned_phrase_embedded.txt
-flags.DEFINE_string(
-    "fuse_doc_type", "arithmetic_mean",
-    "options: arithmetic_mean, geometric_mean")
-FLAGS = flags.FLAGS
-
 
 def docs_gen(f):
     """
@@ -77,25 +34,20 @@ def docs_gen(f):
 def main(_):
     # ---------
     # Load data
-    params = vars(get_args())
+    args = get_args()
+    params = vars(args)
     # todo remove samples with empty labels for softmax
-    labels = load(FLAGS.labels_path)
-    terms = load(FLAGS.terms_path)
+    labels = load(args.labels_path)
+    terms = load(args.terms_path)
 
     # get params
     params['pred_data_size'] = len(labels)
-    params['embeddings_dim'] = FLAGS.embedding_dim
-    params['dropout'] = FLAGS.dropout
-    params['num_epochs'] = FLAGS.num_epochs
-    params['batch_size'] = FLAGS.batch_size
-    params['term_size'] = len(terms)
-    params['loss_fn'] = FLAGS.loss_fn
-    params['model'] = FLAGS.model
+    params['embeddings_dim'] = args.embedding_dim
 
     folder = '%d_%s_%s_%s_nl%s_kln%s_dp%s_ep%d_bs%d' % (
         int(time.time()), params['model'], params['loss_fn'],
-        os.path.split(FLAGS.embedded_sentences)[1].split('.')[0],
-        params['num_layers'], os.path.split(FLAGS.labels_path)[1],
+        os.path.split(args.embedded_sentences)[1].split('.')[0],
+        params['num_layers'], os.path.split(args.labels_path)[1],
         params['dropout'], params['num_epochs'], params['batch_size'])
 
     params['model_dir'] = os.path.join("results", "models", folder)
@@ -106,7 +58,7 @@ def main(_):
     # Encode
     estimator = EncodeEstimator(params)
 
-    with h5py.File(FLAGS.embedded_sentences, 'r') as f:
+    with h5py.File(args.embedded_sentences, 'r') as f:
         def sen_gen():
             for i in docs_gen(f):
                 yield i[0]
@@ -115,7 +67,7 @@ def main(_):
             for i in docs_gen(f):
                 yield i[1]
 
-        if FLAGS.test_mode == 2:
+        if args.test_mode == 2:
             estimator.train(sen_gen, len_gen, labels, 1)
         else:
             estimator.train(sen_gen, len_gen, labels)
@@ -133,11 +85,11 @@ def main(_):
     # ---------
     # Inference
     doc_tfidf_reps = labels
-    if len(FLAGS.doc_tfidf_reps_path) > 0:
-        doc_tfidf_reps = load(FLAGS.doc_tfidf_reps_path)
+    if len(args.doc_tfidf_reps_path) > 0:
+        doc_tfidf_reps = load(args.doc_tfidf_reps_path)
 
     fused_docs, expanded, top_k_indices = inference.main(
-        doc_vecs, doc_tfidf_reps, FLAGS.k, FLAGS.fuse_doc_type)
+        doc_vecs, doc_tfidf_reps, args.k, args.fuse_doc_type)
 
     save(os.path.join(out_dir, 'top_k_indices'), top_k_indices)
     np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
@@ -146,8 +98,8 @@ def main(_):
 
     # ---------
     # Save data
-    pub_med_ids, _ = read_file(FLAGS.documents_path)
-    index2word = load(FLAGS.index2word_path)
+    pub_med_ids, _ = read_file(args.documents_path)
+    index2word = load(args.index2word_path)
 
     pred_lab_words = []
     for p_id, lab in zip(pub_med_ids, pred_labels):
@@ -160,7 +112,7 @@ def main(_):
     # convert to word ids
     labels = [[terms[l] for l in lab] for lab in labels]
 
-    if len(FLAGS.doc_tfidf_reps_path) == 0:
+    if len(args.doc_tfidf_reps_path) == 0:
         expanded = [[terms[l] for l in lab] for lab in expanded]
 
     expanded_labels = []

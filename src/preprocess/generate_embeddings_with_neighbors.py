@@ -1,8 +1,4 @@
-#  Copyright (c) 2019.
-
 # Script to generate new embeddings file by averaging over K-nearest neighbors
-
-
 import numpy as np
 import argparse
 
