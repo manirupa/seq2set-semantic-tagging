@@ -32,7 +32,6 @@ cd $PBS_O_WORKDIR
 python encode_and_inference.py \
   --model Transformer \
   --loss_fn lm \
-  --keep_model_files True \
   --labels_path data/labels.pickle \
   --num_epochs 60 \
   --batch_size 32 \
@@ -50,4 +49,5 @@ python encode_and_inference.py \
   --attention_size 200 \
   --num_heads 5 \
   --max_length 256 \
-  --padding_length 256
+  --padding_length 256 \
+  --keep_model_files  # equals true

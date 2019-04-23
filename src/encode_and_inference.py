@@ -68,14 +68,10 @@ def main():
     estimator = EncodeEstimator(params)
 
     if args.folder is None:
-        if args.test_mode == 2:
-            estimator.train_and_eval(
-                docs_train, labels_lm_train, labels_train,
-                docs_eval, labels_lm_eval, labels_eval, max_step=1)
-        else:
-            estimator.train_and_eval(
-                docs_train, labels_lm_train, labels_train,
-                docs_eval, labels_lm_eval, labels_eval)
+        max_step = 1 if args.test_mode == 2 else None
+        estimator.train_and_eval(
+            docs_train, labels_lm_train, labels_train,
+            docs_eval, labels_lm_eval, labels_eval, max_step=max_step)
 
     estimator.batch_size = 128  # takes less time with large batch size
     doc_vecs, pred_labels = estimator.predict(docs)

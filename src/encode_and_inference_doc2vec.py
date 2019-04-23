@@ -1,4 +1,3 @@
-import argparse
 import os
 import time
 
@@ -10,13 +9,12 @@ from utils import load, save, save_list, read_file, get_args
 
 
 def main():
-    args = get_args()
     # ---------
     # load data
+    args = get_args()
+    pub_med_ids, documents = read_file(args.documents_path)
     labels = load(args.labels_path)
     terms = load(args.terms_path)
-    pub_med_ids, documents = read_file(args.documents_path)
-    index2word = load(args.index2word_path)
 
     if args.test_mode != 0:
         documents = documents[:100]
@@ -59,6 +57,7 @@ def main():
     if len(args.doc_tfidf_reps_path) == 0:
         expanded = [[terms[l] for l in lab] for lab in expanded]
 
+    index2word = load(args.index2word_path)
     expanded_labels = []
     for p_id, l, ex in zip(pub_med_ids, labels, expanded):
         e_words = ', '.join([index2word[e] for e in ex])

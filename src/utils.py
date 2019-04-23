@@ -64,8 +64,8 @@ def get_args():
         'similarities of the first 100 docs and Encoder'
         'will only train for 1 step.')
     parser.add_argument('--fuse_doc_type', default='arithmetic_mean', help='options: arithmetic_mean, geometric_mean')
-    parser.add_argument('--keep_model_files', type=bool, default=True)
-    parser.add_argument('--no_inference', type=bool, default=False)
+    parser.add_argument('--keep_model_files', action='store_true')
+    parser.add_argument('--no_inference', action='store_true')
     # input file paths
     parser.add_argument('--word_vecs_path', default='data/word2vec_sg1_s50_w4_m1_n5_i15.npy')
     parser.add_argument('--docs_path', default='data/docs_word_indices_mc1.pickle')
