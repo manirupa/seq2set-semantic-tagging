@@ -48,6 +48,15 @@ def remove_samples_with_empty_labels(docs, labels):
     return docs_new, labels_new
 
 
+def str2bool(v):
+    if v == 'true':
+        return True
+    elif v == 'false':
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected. Either \'true\' or \'false\'')
+
+
 def get_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
@@ -64,7 +73,7 @@ def get_args():
         'similarities of the first 100 docs and Encoder'
         'will only train for 1 step.')
     parser.add_argument('--fuse_doc_type', default='arithmetic_mean', help='options: arithmetic_mean, geometric_mean')
-    parser.add_argument('--keep_model_files', action='store_true')
+    parser.add_argument('--keep_model_files', type=str2bool, nargs='?', const=True, default='false')
     parser.add_argument('--no_inference', action='store_true')
     # input file paths
     parser.add_argument('--word_vecs_path', default='data/word2vec_sg1_s50_w4_m1_n5_i15.npy')
