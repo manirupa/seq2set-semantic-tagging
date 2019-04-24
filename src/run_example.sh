@@ -17,15 +17,15 @@ cd $PBS_O_WORKDIR
 
 
 # test
-# python encode_and_inference.py --model=LSTM --loss_fn=sigmoid --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=LSTM --loss_fn=softmax_uniform --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=LSTM --loss_fn=softmax_skewed_labels --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=LSTM --loss_fn=sigmoid_with_constraint --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=DAN --loss_fn=sigmoid --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=BiLSTM --loss_fn=sigmoid --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=BiLSTMATT --loss_fn=sigmoid --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=Transformer --loss_fn=sigmoid --num_epochs=2 --test_mode=1  # pass
-# python encode_and_inference.py --model=doc2vec --test_mode=1  # pass
+# python encode_and_inference.py --model LSTM --loss_fn sigmoid --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model LSTM --loss_fn softmax_uniform --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model LSTM --loss_fn softmax_skewed_labels --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model LSTM --loss_fn sigmoid_with_constraint --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model DAN --loss_fn sigmoid --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model BiLSTM --loss_fn sigmoid --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model BiLSTMATT --loss_fn sigmoid --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model Transformer --loss_fn sigmoid --num_epochs 2 --test_mode 1
+# python encode_and_inference.py --model doc2vec --test_mode=1
 
 
 # run
@@ -50,4 +50,4 @@ python encode_and_inference.py \
   --num_heads 5 \
   --max_length 256 \
   --padding_length 256 \
-  --keep_model_files  # equals true
+  --keep_model_files true

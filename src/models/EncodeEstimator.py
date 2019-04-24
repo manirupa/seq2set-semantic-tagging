@@ -155,29 +155,32 @@ class EncodeEstimator:
 
         with tf.name_scope("metrics"):
             acc_op = tf.metrics.accuracy(labels, pred_labels_one_hot)
-        #     labels = tf.cast(labels, tf.int64)
-        #     pred_labels_one_hot = tf.cast(pred_labels_one_hot, tf.int64)
-        #     recall = tf.metrics.recall(labels, pred_labels_one_hot)
-        #     precision = tf.metrics.precision(labels, pred_labels_one_hot)
-        #     p_at_1 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 1)
-        #     p_at_3 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 3)
-        #     p_at_5 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 5)
-        #     r_at_1 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 1)
-        #     r_at_3 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 3)
-        #     r_at_5 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 5)
+
+            recall = tf.metrics.recall(labels, pred_labels_one_hot)
+            precision = tf.metrics.precision(labels, pred_labels_one_hot)
+
+            labels = tf.cast(labels, tf.int64)
+            pred_labels_one_hot = tf.cast(pred_labels_one_hot, tf.int64)
+
+            p_at_1 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 1)
+            p_at_3 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 3)
+            p_at_5 = tf.metrics.precision_at_k(labels, pred_labels_one_hot, 5)
+            r_at_1 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 1)
+            r_at_3 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 3)
+            r_at_5 = tf.metrics.recall_at_k(labels, pred_labels_one_hot, 5)
 
         global_step = tf.train.get_global_step()
 
         metrics = {
-            'accuracy': acc_op
-            # 'precision': precision,
-            # 'recall': recall,
-            # 'precision_at_1': p_at_1,
-            # 'precision_at_3': p_at_3,
-            # 'precision_at_5': p_at_5,
-            # 'recall_at_1': r_at_1,
-            # 'recall_at_3': r_at_3,
-            # 'recall_at_5': r_at_5,
+            'accuracy': acc_op,
+            'precision': precision,
+            'recall': recall,
+            'precision_at_1': p_at_1,
+            'precision_at_3': p_at_3,
+            'precision_at_5': p_at_5,
+            'recall_at_1': r_at_1,
+            'recall_at_3': r_at_3,
+            'recall_at_5': r_at_5,
         }
 
         if mode == tf.estimator.ModeKeys.EVAL:

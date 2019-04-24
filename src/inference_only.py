@@ -1,37 +1,28 @@
 import os
-import time
+import json
+import sys
 
 import numpy as np
-from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 from models import inference
-from utils import load, save, save_list, read_file, get_args
+from utils import load, save, save_list, read_file, DotDict
 
 
-def main():
-    # ---------
+def inference_only(param_path):
+    # -----
     # load data
-    args = get_args()
-    pub_med_ids, documents = read_file(args.documents_path)
+    with open(param_path) as f:
+        args = json.load(f)
+
+    args = DotDict(args)
+    out_dir = args.model_dir.replace('model', 'output')
+    doc_vecs_path = os.path.join(out_dir, 'doc_vecs.npy')
+
+    pub_med_ids, _ = read_file(args.documents_path)
     labels = load(args.labels_path)
+    index2word = load(args.index2word_path)
     terms = load(args.terms_path)
-
-    if args.test_mode != 0:
-        documents = documents[:100]
-        labels = labels[:100]
-
-    # ------
-    # Encode
-    folder = str(int(time.time())) + '_doc2vec'
-    model_dir = '../results/models/' + folder
-    os.makedirs(model_dir, exist_ok=True)
-    out_dir = '../results/outputs/' + folder
-    os.makedirs(out_dir, exist_ok=True)
-
-    documents = [TaggedDocument(doc, [i]) for i, doc in enumerate(documents)]
-    model = Doc2Vec(documents, vector_size=300, window=10, min_count=5, workers=-1, epochs=20)
-    model.save(model_dir + '/doc2vec.model')
-    doc_vecs = model.docvecs.vectors_docs
+    doc_vecs = np.load(doc_vecs_path)
 
     # ---------
     # Inference
@@ -48,16 +39,14 @@ def main():
         np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
     del doc_vecs, top_k_indices, fused_docs
 
-    # ---------
-    # save data
-
+    # ----------------------------
+    # Save expanded labels to disk
     # convert to word ids
     labels = [[terms[l] for l in lab] for lab in labels]
 
     if len(args.doc_tfidf_reps_path) == 0:
         expanded = [[terms[l] for l in lab] for lab in expanded]
 
-    index2word = load(args.index2word_path)
     expanded_labels = []
     for p_id, l, ex in zip(pub_med_ids, labels, expanded):
         e_words = ', '.join([index2word[e] for e in ex])
@@ -65,9 +54,22 @@ def main():
         line = str(p_id) + '\tORIGINAL: ' + original + '\tEXPANDED: ' + e_words
         expanded_labels.append(line)
 
-    expanded_labels_dir = out_dir + '/' + out_dir.split('/')[-1] + '_expanded_labels.txt'
+    fname = os.path.split(out_dir)[-1] + '_expanded_labels.txt'
+    expanded_labels_dir = os.path.join(out_dir, fname)
     save_list(expanded_labels_dir, expanded_labels)
 
 
+def main(fname):
+    param_path_list = []
+    with open(fname, encoding='utf-8') as f:
+        for line in f:
+            param_path_list.append(line)
+
+    for param_path in param_path_list:
+        inference_only(param_path)
+
+
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) != 2:
+        raise ValueError("only 1 argument allowed")
+    main(str(sys.argv[1]))

@@ -113,9 +113,9 @@ def main():
         doc_vecs, doc_tfidf_reps, args.k, args.fuse_doc_type)
 
     save(os.path.join(out_dir, 'top_k_indices'), top_k_indices)
+    np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
     if args.keep_model_files:
         np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
-        np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
     del doc_vecs, top_k_indices, fused_docs
 
     # ----------------------------

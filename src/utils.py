@@ -2,6 +2,13 @@ import pickle
 import argparse
 
 
+class DotDict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def read_file(filename):
     with open(filename, encoding='utf-8') as input_file:
         # each document should be a list of words
