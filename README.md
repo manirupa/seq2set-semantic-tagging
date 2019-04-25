@@ -17,7 +17,7 @@
 
 - pytorch
 
-## Pre-precessing
+## Pre-processing
 
 cleaned.txt: all lower case words, stop words removed
 
