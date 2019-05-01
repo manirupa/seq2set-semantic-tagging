@@ -53,8 +53,14 @@ def main():
         params['model_dir'] = os.path.join(parent_path, 'results', 'models', folder)
         out_dir = os.path.join(parent_path, 'results', 'outputs', folder, 'direct')
     else:
+        themodel = params['model']
+        theloss = params['loss_fn']
+        if (themodel == 'Transformer'):
+            themodel += '_nh%s' % params['num_heads']
+        if (theloss == 'lm'):
+            theloss += '_alpha%s' % params['alpha']
         folder = '%d_%s_%s_%s_nl%s_kln%s_dp%s_ep%d_bs%d' % (
-            int(time.time()), params['model'], params['loss_fn'],
+            int(time.time()), themodel, theloss,
             os.path.split(args.word_vecs_path)[-1],
             params['num_layers'], os.path.split(args.labels_path)[1],
             params['dropout'], params['num_epochs'], params['batch_size'])
@@ -101,6 +107,8 @@ def main():
 
     print("Finished predicting.")
     if args.no_inference:
+        #np.save(os.path.join(out_dir, 'fused_docs'), fused_docs)
+        np.save(os.path.join(out_dir, 'doc_vecs'), doc_vecs)
         exit(1)
 
     # ---------
